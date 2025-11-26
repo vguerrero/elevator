@@ -3,6 +3,7 @@ package org.victor;
 import lombok.extern.slf4j.Slf4j;
 import org.victor.audit.AuditLogger;
 import org.victor.dispatch.ElevatorDispatcher;
+import org.victor.dispatch.ElevatorRequest;
 import org.victor.monitoring.SystemMonitor;
 import org.victor.security.User;
 import org.victor.security.UserManager;
@@ -52,6 +53,8 @@ public class Demo {
             log.info("Authentication successful for user: {}", authenticatedUser.getUsername());
             log.info("  User roles: {}", authenticatedUser.getRoles());
             log.info("  User keycards: {}", authenticatedUser.getKeycards());
+            User authenticatedUser2 = userManager.authenticate("user-001", "passwor");
+            log.info(authenticatedUser2.getUsername());
 
         } catch (Exception e) {
             log.error("Security module error: {}", e.getMessage());
@@ -215,6 +218,31 @@ public class Demo {
         log.info("All concurrent operations completed");
         log.info("Final elevator state: {}", publicElevator3);
 
+        // ========== ELEVATOR REQUESTS AND PROCESSING ==========
+        log.info("\n========== ELEVATOR REQUESTS AND PROCESSING ==========");
+
+        log.info("Creating elevator requests for dispatcher processing...");
+
+        // Employee with keycard requesting public elevator to floor 35 (access granted)
+        dispatcher.requestElevator(new ElevatorRequest("user-001", 35, ElevatorRequest.ElevatorType.PUBLIC, userManager.hasKeycard("user-001", "KEYCARD-STD-001")));
+
+        // Employee without keycard requesting public elevator to basement 0 (access denied due to no keycard)
+        dispatcher.requestElevator(new ElevatorRequest("user-002", 0, ElevatorRequest.ElevatorType.PUBLIC, userManager.hasKeycard("user-002", "KEYCARD-STD-001")));
+
+        // Admin with roof keycard requesting public elevator to floor 50 (access granted)
+        dispatcher.requestElevator(new ElevatorRequest("admin-001", 50, ElevatorRequest.ElevatorType.PUBLIC, userManager.hasKeycard("admin-001", "KEYCARD-ROOF-001")));
+
+        // Employee requesting freight elevator to floor 20 (freight has no access restrictions)
+        dispatcher.requestElevator(new ElevatorRequest("user-001", 20, ElevatorRequest.ElevatorType.FREIGHT, false));
+
+        log.info("Processing queue of {} requests...", dispatcher.getStats().getPendingRequests());
+
+        dispatcher.processRequests();
+
+        log.info("Requests processed successfully. Elevator positions after processing:");
+        dispatcher.getAllElevators().forEach(e ->
+                log.info("  {}: Floor {}", e.getName(), e.getCurrentFloor()));
+
         // ========== AUDIT LOG REVIEW ==========
         log.info("\n========== AUDIT LOG ==========");
 
@@ -241,8 +269,7 @@ public class Demo {
 
         log.info("\n========================================================");
         log.info("         DEMONSTRATION COMPLETED SUCCESSFULLY          ");
-        log.info("========================================================");
+
 
     }
 }
-
