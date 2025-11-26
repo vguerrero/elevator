@@ -68,8 +68,46 @@ public class Demo {
         dispatcher.registerElevator(freightElevator);
         dispatcher.registerElevator(publicElevator2);
 
+        // Move elevators to different floors for testing findNearestElevator
+        log.info("Setting up elevator positions for nearest elevator test...");
+        publicElevator.goToFloor(10, true); // Move to floor 10
+        freightElevator.goToFloor(25); // Move to floor 25
+        publicElevator2.goToFloor(45, true); // Move to floor 45
+
         log.info("Registered {} elevators", dispatcher.getStats().getTotalElevators());
         dispatcher.getAllElevators().forEach(e -> log.info("  Elevator: {}", e.getName()));
+
+        // ========== FIND NEAREST ELEVATOR TEST ==========
+        log.info("\n========== FIND NEAREST ELEVATOR TEST ==========");
+
+        log.info("Current elevator positions:");
+        dispatcher.getAllElevators().forEach(e ->
+                log.info("  {}: Floor {}", e.getName(), e.getCurrentFloor()));
+
+        try {
+            // Test finding nearest elevator to floor 15
+            Elevator nearestTo15 = dispatcher.findNearestElevator(15);
+            log.info("Nearest elevator to floor 15: {} (currently on floor {})",
+                    nearestTo15.getName(), nearestTo15.getCurrentFloor());
+
+            // Test finding nearest elevator to floor 30
+            Elevator nearestTo30 = dispatcher.findNearestElevator(30);
+            log.info("Nearest elevator to floor 30: {} (currently on floor {})",
+                    nearestTo30.getName(), nearestTo30.getCurrentFloor());
+
+            // Test finding nearest elevator to floor 40
+            Elevator nearestTo40 = dispatcher.findNearestElevator(40);
+            log.info("Nearest elevator to floor 40: {} (currently on floor {})",
+                    nearestTo40.getName(), nearestTo40.getCurrentFloor());
+
+            // Test using the nearest elevator
+            log.info("Moving nearest elevator to floor 15 using dispatcher.findNearestElevator()...");
+            nearestTo15.goToFloor(15);
+            log.info("Success: {} moved to floor 15", nearestTo15.getName());
+
+        } catch (Exception e) {
+            log.error("Error in findNearestElevator test: {}", e.getMessage());
+        }
 
         // ========== SAFE OPERATIONS ==========
         log.info("\n========== SAFE OPERATIONS WITH ERROR HANDLING ==========");
@@ -207,3 +245,4 @@ public class Demo {
 
     }
 }
+
